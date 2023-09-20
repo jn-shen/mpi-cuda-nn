@@ -6,7 +6,6 @@
 
 #include "cublas_v2.h"
 #include "gpu_func.h"
-#include "mpi.h"
 #include "types.h"
 using namespace std;
 

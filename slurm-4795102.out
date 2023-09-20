@@ -1,0 +1,16 @@
+Loading openmpi/4.1.4-cuda-11.8
+  Loading requirement: gcc/8.2.0
+Number of MPI processes = 1
+Number of CUDA devices = 1
+
+Entering GEMM Benchmarking mode! Stand by.
+
+Starting GEMM 1: M = 800; N = 1000; K = 784
+CUBLAS gemm error at utils/tests.cpp:200
+My GEMM output not matching with reference. Rel diff = 3.71051e+11
+Completed GEMM 1
+
+Starting GEMM 2: M = 800; N = 10; K = 1000
+CUBLAS gemm error at utils/tests.cpp:200
+My GEMM output not matching with reference. Rel diff = 1.09283e+12
+Completed GEMM 2

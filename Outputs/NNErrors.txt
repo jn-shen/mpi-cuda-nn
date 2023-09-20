@@ -1,0 +1,8 @@
+Mismatches for W[0]
+No errors were found
+Mismatches for b[0]
+No errors were found
+Mismatches for W[1]
+No errors were found
+Mismatches for b[1]
+No errors were found
