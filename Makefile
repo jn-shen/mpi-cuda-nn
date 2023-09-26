@@ -1,10 +1,14 @@
 OBJDIR=obj
 INCDIR=inc
-DEPDIR=dep
-CUDASAMPLES=/usr/local/cuda-11.0/samples/common/inc
+
+# Paths for Armadillo
+ARMA_INCLUDE=./lib/armadillo/usr/include
+ARMA_LIB=./lib/armadillo/usr/lib64
+
+# Path for Lapack
+LAPACK_LIB=./lib/lapack/lib64
 
 # Compilers
-CC=mpic++
 CUD=nvcc
 
 TARGET := main
@@ -20,43 +24,28 @@ UTLOBJS := $(UTLSRCS:utils/%.cpp=$(OBJDIR)/%.o)
 
 OBJS := $(CPPOBJS) $(CUDOBJS) $(UTLOBJS)
 
-DEPFILES := $(OBJS:$(OBJDIR)/%.o=$(DEPDIR)/%.d)
-
 # Flags
-CFLAGS=-O3 -std=c++11 -DARMA_DONT_USE_WRAPPER -DARMA_USE_LAPACK
-CUDFLAGS=-c -O3 -arch=compute_75 -code=sm_75 -Xcompiler -Wall,-Winline,-Wextra,-Wno-strict-aliasing
-INCFLAGS=-I$(CUDASAMPLES) -I$(INCDIR)
-LDFLAGS=-lblas -llapack -larmadillo -lcublas -lcudart
-DEPFLAGS=-MT $@ -MMD -MF $(addprefix $(DEPDIR)/, $(notdir $*)).d
+CUDFLAGS=-O3 -arch=sm_70
+INCFLAGS=-I$(INCDIR) -I$(ARMA_INCLUDE) -I${MPI_HOME}/include
+LDFLAGS=-L$(ARMA_LIB) -L${MPI_HOME}/lib -L${LAPACK_LIB} -lblas -llapack -lmpi -larmadillo -lcublas -lcudart
 
-CC_CMD=$(CC) $(CFLAGS) $(INCFLAGS)
 CU_CMD=$(CUD) $(CUDFLAGS) $(INCFLAGS)
 
-# --fmad=false
+# Using nvcc to compile all object files
+$(OBJDIR)/%.o: %.cpp
+	@mkdir -p $(OBJDIR)
+	$(CU_CMD) -c $< -o $@
+
+$(OBJDIR)/%.o: utils/%.cpp
+	@mkdir -p $(OBJDIR)
+	$(CU_CMD) -c $< -o $@
+
+$(OBJDIR)/%.o: %.cu
+	@mkdir -p $(OBJDIR)
+	$(CU_CMD) -c $< -o $@
 
 $(TARGET): $(OBJS)
-	$(CC) $(OBJS) -o $@ $(LDFLAGS)
-
-$(CPPOBJS): $(OBJDIR)/%.o: %.cpp $(DEPDIR)/%.d
-	@mkdir -p $(OBJDIR)
-	@mkdir -p $(DEPDIR)
-	$(CC_CMD) -c $< -o $@ $(DEPFLAGS)
-
-$(UTLOBJS): $(OBJDIR)/%.o: utils/%.cpp $(DEPDIR)/%.d 
-	@mkdir -p $(OBJDIR)
-	@mkdir -p $(DEPDIR)
-	$(CC_CMD) -c $< -o $@ $(DEPFLAGS)
-
-$(CUDOBJS): $(OBJDIR)/%.o: %.cu $(DEPDIR)/%.d
-	@mkdir -p $(OBJDIR)
-	@mkdir -p $(DEPDIR)
-	$(CU_CMD) -c $< -o $@ $(DEPFLAGS)
-
-$(DEPFILES):
-include $(wildcard $(DEPFILES))
+	$(CUD) $(OBJS) -o $@ $(LDFLAGS)
 
 clean:
-	rm -rf $(OBJDIR)/*.o $(DEPDIR)/*.d main
-
-clear:
-	rm -rf fp-* 
+	rm -rf $(OBJDIR)/*.o main

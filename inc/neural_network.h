@@ -6,6 +6,17 @@
 #include <iostream>
 
 #include "../utils/types.h"
+#include "gpu_func.h"
+
+#define MPI_SAFE_CALL(call)                                                  \
+  do {                                                                       \
+    int err = call;                                                          \
+    if (err != MPI_SUCCESS) {                                                \
+      fprintf(stderr, "MPI error %d in file '%s' at line %i", err, __FILE__, \
+              __LINE__);                                                     \
+      exit(1);                                                               \
+    }                                                                        \
+  } while (0)
 
 class NeuralNetwork {
  public:
@@ -32,25 +43,29 @@ class NeuralNetwork {
   }
 };
 
-void feedforward(NeuralNetwork& nn, const arma::Mat<real>& X,
-                 struct cache& bpcache);
-real loss(NeuralNetwork& nn, const arma::Mat<real>& yc,
-          const arma::Mat<real>& y, real reg);
-void backprop(NeuralNetwork& nn, const arma::Mat<real>& y, real reg,
-              const struct cache& bpcache, struct grads& bpgrads);
-void numgrad(NeuralNetwork& nn, const arma::Mat<real>& X,
-             const arma::Mat<real>& y, real reg, struct grads& numgrads);
-void train(NeuralNetwork& nn, const arma::Mat<real>& X,
-           const arma::Mat<real>& y, real learning_rate, real reg = 0.0,
+void feedforward(NeuralNetwork &nn, const arma::Mat<real> &X,
+                 struct cache &bpcache);
+real loss(NeuralNetwork &nn, const arma::Mat<real> &yc,
+          const arma::Mat<real> &y, real reg);
+void backprop(NeuralNetwork &nn, const arma::Mat<real> &y, real reg,
+              const struct cache &bpcache, struct grads &bpgrads);
+void numgrad(NeuralNetwork &nn, const arma::Mat<real> &X,
+             const arma::Mat<real> &y, real reg, struct grads &numgrads);
+void train(NeuralNetwork &nn, const arma::Mat<real> &X,
+           const arma::Mat<real> &y, real learning_rate, real reg = 0.0,
            const int epochs = 15, const int batch_size = 800,
            bool grad_check = false, int print_every = -1, int debug = 0);
-void predict(NeuralNetwork& nn, const arma::Mat<real>& X,
-             arma::Row<real>& label);
+void predict(NeuralNetwork &nn, const arma::Mat<real> &X,
+             arma::Row<real> &label);
 
-void parallel_train(NeuralNetwork& nn, const arma::Mat<real>& X,
-                    const arma::Mat<real>& y, real learning_rate,
+void GPUfeedforward(GPU_NN nn, GPU_cache bpcache, real *d_X_batch, int n_clos);
+
+void GPUbackprop(GPU_NN nn, real reg, GPU_cache bpcache, GPU_grads bpgrads, BP_temp temp,
+                 Matrix_t mat_t, real *d_x_batch, real *d_y_batch, int n_clos, int batch_clos);
+
+void parallel_train(NeuralNetwork &nn, const arma::Mat<real> &X,
+                    const arma::Mat<real> &y, real learning_rate,
                     real reg = 0.0, const int epochs = 15,
                     const int batch_size = 800, bool grad_check = false,
                     int print_every = -1, int debug = 0);
-
 #endif
